@@ -8,10 +8,10 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   users     User[]
   products  Product[]
   settings  Settings?
@@ -27,19 +27,19 @@ model User {
 }
 
 model Product {
-  id               String       @id @default(cuid())
-  organizationId   String
-  name             String
-  sku              String
-  description      String?
-  quantityOnHand   Int          @default(0)
-  costPrice        Float?
-  sellingPrice     Float?
+  id                String       @id @default(cuid())
+  organizationId    String
+  name              String
+  sku               String
+  description       String?
+  quantityOnHand    Int          @default(0)
+  costPrice         Float?
+  sellingPrice      Float?
   lowStockThreshold Int?
-  deletedAt        DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  organization     Organization @relation(fields: [organizationId], references: [id])
+  deletedAt         DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, sku])
 }
