@@ -1,0 +1,680 @@
+{
+  "info": {
+    "name": "StockFlow API",
+    "_postman_id": "stockflow-mvp-collection",
+    "description": "Complete API collection for StockFlow Inventory Management System.\n\nHow to use:\n1. Start backend: npm run dev (port 3001)\n2. Run 'Signup' first to get token\n3. Token auto-saves to environment variable\n4. All other requests use token automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const res = pm.response.json();",
+                  "  pm.collectionVariables.set('token', res.token);",
+                  "  console.log('Token saved:', res.token);",
+                  "  pm.test('Signup successful', () => pm.expect(res.token).to.be.a('string'));",
+                  "  pm.test('User email returned', () => pm.expect(res.user.email).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"abhijeet@teststore.com\",\n  \"password\": \"secure123\",\n  \"organizationName\": \"Abhijeet Test Store\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            },
+            "description": "Register a new user and organization. Token is auto-saved to collection variable."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"email\": \"abhijeet@teststore.com\",\n    \"organizationName\": \"Abhijeet Test Store\"\n  }\n}"
+            },
+            {
+              "name": "Email already exists",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Email already registered\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const res = pm.response.json();",
+                  "  pm.collectionVariables.set('token', res.token);",
+                  "  console.log('Logged in, token saved');",
+                  "  pm.test('Login successful', () => pm.expect(res.token).to.be.a('string'));",
+                  "  pm.test('Organization name returned', () => pm.expect(res.user.organizationName).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"abhijeet@teststore.com\",\n  \"password\": \"secure123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password. JWT token is auto-saved."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"email\": \"abhijeet@teststore.com\",\n    \"organizationName\": \"Abhijeet Test Store\"\n  }\n}"
+            },
+            {
+              "name": "Invalid credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Invalid credentials\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login - Wrong Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"abhijeet@teststore.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Test invalid credentials — should return 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res).to.be.an('array');",
+                  "});",
+                  "const res = pm.response.json();",
+                  "if (res.length > 0) {",
+                  "  pm.collectionVariables.set('productId', res[0].id);",
+                  "  console.log('First product ID saved:', res[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Get all products for the logged-in user's organization."
+          }
+        },
+        {
+          "name": "Search Products by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=shirt",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "search", "value": "shirt" }
+              ]
+            },
+            "description": "Search products by name or SKU using the search query param."
+          }
+        },
+        {
+          "name": "Search Products by SKU",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=BTS",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "search", "value": "BTS" }
+              ]
+            },
+            "description": "Search products by SKU prefix."
+          }
+        },
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Product created with id', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('productId', res.id);",
+                  "  console.log('New product ID saved:', res.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Blue T-Shirt\",\n  \"sku\": \"BTS-001\",\n  \"description\": \"100% cotton, unisex\",\n  \"quantityOnHand\": 50,\n  \"costPrice\": 120,\n  \"sellingPrice\": 299,\n  \"lowStockThreshold\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Create a new product. SKU must be unique per organization."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"clx123abc\",\n  \"organizationId\": \"clx456def\",\n  \"name\": \"Blue T-Shirt\",\n  \"sku\": \"BTS-001\",\n  \"description\": \"100% cotton, unisex\",\n  \"quantityOnHand\": 50,\n  \"costPrice\": 120,\n  \"sellingPrice\": 299,\n  \"lowStockThreshold\": 10,\n  \"deletedAt\": null,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Duplicate SKU",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"SKU already exists in your organization\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Product - Low Stock Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Leather Wallet\",\n  \"sku\": \"WAL-007\",\n  \"description\": \"Genuine leather\",\n  \"quantityOnHand\": 2,\n  \"costPrice\": 250,\n  \"sellingPrice\": 599,\n  \"lowStockThreshold\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Creates a product with quantity below threshold — will appear in low stock dashboard."
+          }
+        },
+        {
+          "name": "Create Product - No Optional Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Plain Cap\",\n  \"sku\": \"CAP-BLK\",\n  \"quantityOnHand\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Create product with only required fields — name, sku, quantity."
+          }
+        },
+        {
+          "name": "Get Single Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Product has name and sku', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.name).to.be.a('string');",
+                  "  pm.expect(res.sku).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Get a single product by ID. productId is auto-set after Create Product."
+          }
+        },
+        {
+          "name": "Update Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Product updated', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.name).to.eql('Blue T-Shirt - Updated');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Blue T-Shirt - Updated\",\n  \"sellingPrice\": 349,\n  \"quantityOnHand\": 45\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Update any product field. Only send fields you want to change."
+          }
+        },
+        {
+          "name": "Adjust Stock +10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Quantity increased', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.quantityOnHand).to.be.a('number');",
+                  "  console.log('New quantity:', res.quantityOnHand);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delta\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/adjust",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "adjust"]
+            },
+            "description": "Quick stock adjustment. Use positive delta to add stock."
+          }
+        },
+        {
+          "name": "Adjust Stock -5",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delta\": -5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/adjust",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "adjust"]
+            },
+            "description": "Quick stock adjustment. Use negative delta to reduce stock."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Delete message returned', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.message).to.include('deleted');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "Soft deletes the product (sets deletedAt timestamp). Product won't appear in list anymore."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has totalProducts', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.totalProducts).to.be.a('number');",
+                  "});",
+                  "pm.test('Has totalQuantity', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.totalQuantity).to.be.a('number');",
+                  "});",
+                  "pm.test('Has lowStockItems array', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.lowStockItems).to.be.an('array');",
+                  "});",
+                  "console.log('Dashboard:', JSON.stringify(pm.response.json(), null, 2));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard"]
+            },
+            "description": "Returns total products, total quantity, low stock count, and list of low stock items."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"totalProducts\": 5,\n  \"totalQuantity\": 230,\n  \"lowStockCount\": 2,\n  \"lowStockItems\": [\n    {\n      \"id\": \"clx123abc\",\n      \"name\": \"Leather Wallet\",\n      \"sku\": \"WAL-007\",\n      \"quantityOnHand\": 2,\n      \"threshold\": 5\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Settings",
+      "item": [
+        {
+          "name": "Get Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has defaultLowStockThreshold', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.defaultLowStockThreshold).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Get organization settings including default low stock threshold."
+          }
+        },
+        {
+          "name": "Update Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Threshold updated to 10', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.defaultLowStockThreshold).to.eql(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"defaultLowStockThreshold\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Update the default low stock threshold for the organization."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Auth Error Tests",
+      "item": [
+        {
+          "name": "No Token - Should Fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 401 without token', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Accessing protected route without token — should return 401."
+          }
+        },
+        {
+          "name": "Invalid Token - Should Fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 401 with invalid token', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer invalidtoken123" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Accessing protected route with fake token — should return 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "✅ Health Check",
+      "item": [
+        {
+          "name": "API Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API is running', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is ok', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Simple health check — confirms backend is running."
+          }
+        }
+      ]
+    }
+  ]
+}
