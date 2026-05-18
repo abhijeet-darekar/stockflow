@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   };
 
   const authFetch = async (url, options = {}) => {
-    return fetch('http://localhost:3001' + url, {
+    return fetch('https://stockflow-api-a8d6.onrender.com' + url, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
